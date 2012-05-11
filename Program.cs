@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace equals
@@ -26,7 +27,9 @@ namespace equals
             }
         }
 
-        public static IEnumerable<Tuple<int, int, object>> Indices(object[][] items)
+        // Iterate over a arrays within arrays.  Return all the 2D indices and items
+        // within the arrays.
+        private static IEnumerable<Tuple<int, int, object>> Indices(object[][] items)
         {
             for (int i = 0; i < items.Length; i++)
             {
@@ -51,58 +54,60 @@ namespace equals
             }
             else
             {
-                var printHeader = (OnceAction)delegate()
+                // Run tests
+                IEnumerable<TestResult> failures = from result in TestEquals(x, y)
+                                                   where (result.Error != null) || (result.Result != shouldEqual)
+                                                   select result;
+
+                // Check result
+                using (IEnumerator<TestResult> en = failures.GetEnumerator())
                 {
-                    Console.WriteLine("! {0} -- {1} !", x, y);
-                };
-                foreach (var item in from method in x.GetType().GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-                                     let paras = method.GetParameters()
-                                     where method.Name == "Equals" && paras.Length == 1 && method.ReturnType == typeof(bool)
-                                     select new { Method = method, Param = paras[0] })
-                {
-                    if (yNull || item.Param.ParameterType.IsAssignableFrom(y.GetType()))
+                    if (en.MoveNext())
                     {
-                        bool eq = (bool)item.Method.Invoke(x, new object[]{y});
-                        if (eq != shouldEqual)
+                        Console.WriteLine("! {0} -- {1} !", x, y);
+                        do
                         {
-                            printHeader.Act();
-                            Console.WriteLine("{0}, {1}: {2}", item.Method.DeclaringType, item.Param.ParameterType, eq);
+                            Console.WriteLine(en.Current);
                         }
+                        while (en.MoveNext());
                     }
                 }
             }
         }
 
-        private class OnceAction
+        private class TestResult
         {
-            private Action action;
+            public MethodInfo TestedMethod { get; set; }
+            public bool Result { get; set; }
+            public Exception Error { get; set; }
+        }
 
-            private OnceAction(Action act)
+        private static IEnumerable<TestResult> TestEquals(object x, object y)
+        {
+            if (ReferenceEquals(x, null))
             {
-                action = act;
+                throw new ArgumentNullException("x");
             }
 
-            public static implicit operator OnceAction(Action act)
-            {
-                return new OnceAction(act);
-            }
+            Type yType = Object.ReferenceEquals(y, null) ? null : y.GetType();
 
-            public static explicit operator OnceAction(Delegate act)
+            foreach (var item in from method in x.GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                                    let paras = method.GetParameters()
+                                    where method.Name == "Equals" && paras.Length == 1 && method.ReturnType == typeof(bool)
+                                    select new { Method = method, Param = paras[0] })
             {
-                var actor = act as Action;
-                if (actor == null)
+                if ((yType == null) || item.Param.ParameterType.IsAssignableFrom(yType))
                 {
-                    actor = delegate() { act.DynamicInvoke(); };
-                }
-                return new OnceAction(actor);
-            }
-
-            public void Act()
-            {
-                if (action != null)
-                {
-                    action();
-                    action = null;
+                    var testResult = new TestResult { TestedMethod = item.Method };
+                    try
+                    {
+                        testResult.Result = (bool)item.Method.Invoke(x, new object[] { y });
+                    }
+                    catch (Exception ex)
+                    {
+                        testResult.Error = ex;
+                    }
+                    yield return testResult;
                 }
             }
         }
