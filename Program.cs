@@ -18,6 +18,10 @@ namespace equals
                 new object[] { new ClassA(1, 2), new ClassA(1, 2) },
                 new object[] { new ClassA(1, 1) },
                 new object[] { new ClassA(2, 2) },
+                new object[] { new ClassB(3, 1, 2), new ClassB(3, 1, 2) },
+                new object[] { new ClassB(2, 1, 2) },
+                new object[] { new ClassB(3, 3, 2) },
+                new object[] { new ClassB(3, 1, 3) },
             };
             foreach (Tuple<int, int, object> item1 in Indices(objects))
             foreach (Tuple<int, int, object> item2 in Indices(objects))
@@ -64,10 +68,10 @@ namespace equals
                 {
                     if (en.MoveNext())
                     {
-                        Console.WriteLine("! {0} -- {1} !", x, y);
+                        Console.WriteLine("{0} - {1} - {2}", x, y, shouldEqual);
                         do
                         {
-                            Console.WriteLine(en.Current);
+                            Console.WriteLine("  {0}", en.Current);
                         }
                         while (en.MoveNext());
                     }
@@ -80,6 +84,22 @@ namespace equals
             public MethodInfo TestedMethod { get; set; }
             public bool Result { get; set; }
             public Exception Error { get; set; }
+
+            public override string ToString()
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.Append(TestedMethod);
+                sb.Append(" ");
+                if (this.Error != null)
+                {
+                    sb.AppendFormat("ERROR: {0}", Error);
+                }
+                else
+                {
+                    sb.AppendFormat("RESULT: {0}", Result);
+                }
+                return sb.ToString();
+            }
         }
 
         private static IEnumerable<TestResult> TestEquals(object x, object y)
