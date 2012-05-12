@@ -31,6 +31,10 @@ namespace equals
                 && (valueA == other.valueA);
         }
 
+        public override int GetHashCode()
+        {
+            return base.GetHashCode() ^ this.valueA;
+        }
 
         public override string ToString()
         {

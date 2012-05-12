@@ -14,26 +14,6 @@ namespace equals
             baseValue = value;
         }
 
-        protected bool? RefEquals(object obj)
-        {
-            if (Object.ReferenceEquals(obj, null))
-            {
-                return false;
-            }
-            else if (Object.ReferenceEquals(obj, this))
-            {
-                return true;
-            }
-            else if (this.GetType() != obj.GetType())
-            {
-                return false;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
         public override bool Equals(object obj)
         {
             return Equals(obj as BaseClass);
@@ -41,12 +21,27 @@ namespace equals
 
         public virtual bool Equals(BaseClass other)
         {
-            bool? eq = RefEquals(other);
-            if (eq.HasValue)
+            if (Object.ReferenceEquals(other, null))
             {
-                return eq.Value;
+                return false;
             }
-            return other.baseValue == this.baseValue;
+            else if (Object.ReferenceEquals(other, this))
+            {
+                return true;
+            }
+            else if (this.GetType() != other.GetType())
+            {
+                return false;
+            }
+            else
+            {
+                return other.baseValue == this.baseValue;
+            }
+        }
+
+        public override int GetHashCode()
+        {
+            return this.baseValue;
         }
 
         public override string ToString()

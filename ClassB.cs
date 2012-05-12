@@ -20,6 +20,11 @@ namespace equals
             return this.Equals(obj as ClassB);
         }
 
+        public override bool Equals(BaseClass other)
+        {
+            return this.Equals(other as ClassB);
+        }
+
         public override bool Equals(ClassA other)
         {
             return this.Equals(other as ClassB);
@@ -33,6 +38,11 @@ namespace equals
             }
 
             return this.valueB == other.valueB;
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode() ^ this.valueB;
         }
 
         public override string ToString()
