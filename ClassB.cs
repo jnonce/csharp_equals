@@ -5,6 +5,9 @@ using System.Text;
 
 namespace equals
 {
+    /// <summary>
+    /// Extend the sample further by implementing Equals on a deeper derived type.
+    /// </summary>
     public class ClassB : ClassA, IEquatable<ClassB>
     {
         private int valueB;
